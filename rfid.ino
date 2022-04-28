@@ -1,64 +1,73 @@
-#include <MFRC522.h>
-#include <SPI.h>
+//**************************************************
+//********************** LIBS **********************
+//**************************************************
+  #include <MFRC522.h>
+  #include <SPI.h>
+//**************************************************
 
-#define SS_PIN    21
-#define RST_PIN   22
+//**************************************************
+//****************** DEFINE GPIOS ******************
+//**************************************************
+  #define SS_PIN 21
+  #define RST_PIN 22
 
-#define SIZE_BUFFER     18
-#define MAX_SIZE_BLOCK  16
-
-#define pinVerde     12
-#define pinVermelho  32
- 
-String rfids[] = {"69 64 83 41", "69 64 83 44"};
-byte sizeRfids = (sizeof(rfids) / sizeof(rfids[0]));
-
-//esse objeto 'chave' é utilizado para autenticação
-MFRC522::MIFARE_Key key;
-//código de status de retorno da autenticação
-MFRC522::StatusCode status;
-
-// Definicoes pino modulo RC522
-MFRC522 mfrc522(SS_PIN, RST_PIN); 
-
-void setup() {
-
-
-  // Inicia a serial
-  Serial.begin(9600);
-  SPI.begin(); // Init SPI bus
-
-  pinMode(pinVerde, OUTPUT);
-  pinMode(pinVermelho, OUTPUT);
+  #define confPin 34
   
-  // Inicia MFRC522
+  #define greenLed 12
+  #define redLed 32
+//**************************************************
+
+//**************************************************
+//**************** GLOBAL VARIABLES ****************
+//**************************************************
+String rfids[] = {"69 64 83 41", "8A 54 70 7F"};
+byte sizeRfids = (sizeof(rfids) / sizeof(rfids[0]));
+String readedR = "";
+//**************************************************
+
+// RFID CONF
+MFRC522::MIFARE_Key key;
+MFRC522::StatusCode status;
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+//**************************************************
+//********************* SETUP **********************
+//**************************************************
+void setup() {
+  Serial.begin(9600);
+  SPI.begin();
   mfrc522.PCD_Init(); 
-  // Mensagens iniciais no serial monitor
+
+  pinMode(greenLed, OUTPUT);
+  pinMode(redLed, OUTPUT);
+  
   Serial.println("Aproxime o seu cartao do leitor...");
   Serial.println();
-
 }
+//**************************************************
 
+//**************************************************
+//********************** LOOP **********************
+//**************************************************
 void loop() {
-   // Aguarda a aproximacao do cartao
-   if ( ! mfrc522.PICC_IsNewCardPresent()) {
+  if (!mfrc522.PICC_IsNewCardPresent()) {
     return;
-   }
-    // Seleciona um dos cartoes
-    if ( ! mfrc522.PICC_ReadCardSerial()) 
-    {
-      return;
-    }
+  }
+  if (!mfrc522.PICC_ReadCardSerial()) {
+    return;
+  }
+  
+  readData();
 
-    readData();
- 
-  // instrui o PICC quando no estado ACTIVE a ir para um estado de "parada"
-  mfrc522.PICC_HaltA(); 
-  // "stop" a encriptação do PCD, deve ser chamado após a comunicação com autenticação, caso contrário novas comunicações não poderão ser iniciadas
+  // one rfid at a time
+  mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();  
 }
+//**************************************************
 
-//faz a leitura dos dados do cartão/tag
+//**************************************************
+//******************* READ RFID ********************
+//**************************************************
 void readData() {
   String content= "";
   byte letter;
@@ -72,7 +81,9 @@ void readData() {
   }
 
   for (int x = 0;x<sizeRfids;x++){
-    if (content.substring(1) == rfids[x]) {
+    readedR = String(content.substring(1));
+    readedR.toUpperCase();
+    if (readedR == rfids[x]) {
       x=sizeRfids;
       Serial.println();
       Serial.println("Authorized access");
@@ -83,8 +94,7 @@ void readData() {
     }
  
     else {
-      Serial.println();
-      Serial.println(" Access denied");
+      Serial.println("Access denied");
       digitalWrite(32, HIGH);
       delay(10);
       digitalWrite(32, LOW);
@@ -92,3 +102,4 @@ void readData() {
      }
   }
 }
+//**************************************************
