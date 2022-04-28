@@ -2,7 +2,7 @@
 //********************** LIBS **********************
 //**************************************************
   #include <MFRC522.h>
-  #include <SPI.h>
+  #include <SPI.h> 
 //**************************************************
 
 //**************************************************
@@ -88,7 +88,7 @@ void readData() {
       Serial.println();
       Serial.println("Authorized access");
       digitalWrite(12, HIGH);
-      delay(100);
+      delay(1000);
       digitalWrite(12, LOW);
       Serial.println();
     }
@@ -97,7 +97,7 @@ void readData() {
         Serial.println();
         Serial.println("Access denied");
         digitalWrite(32, HIGH);
-        delay(100);
+        delay(1000);
         digitalWrite(32, LOW);
         Serial.println(); 
     }
