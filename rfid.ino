@@ -7,27 +7,35 @@
   #include "SPIFFS.h"
   #include "ESPAsyncWebServer.h"
   #include <EEPROM.h>
+  #include <Wire.h>
+  #include "SH1106Wire.h"
 //**************************************************
 
 //**************************************************
 //****************** DEFINE GPIOS ******************
 //**************************************************
-  #define SS_PIN 21
-  #define RST_PIN 22
+  #define SS_PIN 5
+  #define RST_PIN 14 // mudar pro 4
 
-  #define confPin 5
+  #define confPin 13
+  #define confPin2 27
   
   #define greenLed 12
   #define redLed 32
   
   #define RESET_EEPROM 26
-  #define EEPROM_SIZE 254
+  #define EEPROM_SIZE 470
+
+  #define SCREEN_WIDTH 128
+  #define SCREEN_HEIGHT 64
+
+  SH1106Wire  display(0x3c, 21, 22);
 //**************************************************
 
 //**************************************************
 //******************* CONFIG AP ********************
 //**************************************************
-  const char* ssid = "RFID-LOOK";
+  const char* ssid = "RFID-LOCK";
   const char* password =  "$3nh@_d0rfid";
 //**************************************************
 
@@ -80,28 +88,19 @@
   
 //**************************************************
 
-
-
 //**************************************************
 //**************** GLOBAL VARIABLES ****************
 //**************************************************
-
   bool ap = 1;
   
   String rfids[20] = {"69 64 83 41", "09 C4 7A 41", "8A 54 70 7F", "01 15 A1 59",  "CA 19 7B 7F", "9A C4 7C 80", "59 CB 2D 41", "D9 83 2C 41", "09 DD 77 41","39 00 2D 41", "79 7E 38 41","F9 1A B8 B2", "63 AB 09 0B","D9 5C B9 B2", "89 46 7A 41", "9A F0 77 7F", "00 00 00 00", "00 00 00 00", "00 00 00 00", "00 00 00 00"};
-  String peoples[20] = {"Pedro", "Igor", "Yuri", "Jonny", "Lu B", "Lu P", "Letic", "Cida", "Tio C", "Celsi", "Rose", "Lore", "Barre", "Regin", "Filip", "", "", "", "", ""};
   byte sizeRfids = (sizeof(rfids) / sizeof(rfids[0]));
-  byte sizePeoples = (sizeof(peoples) / sizeof(peoples[0]));
   String readedR = "";
-
-  String coiso[5];
-
 //**************************************************
 
 //**************************************************
 //************* INITIAL VALUES PAGE HTML ***********
 //**************************************************
-
   String getId0() {
     return String(rfids[0]);
   }
@@ -182,88 +181,86 @@
     return String(rfids[19]);
   }
 
-    String getName0() {
-    return String(peoples[0]);
+  String getName0() {
+    return "2";
   }
 
   String getName1() {
-    return String(peoples[1]);
+    return "2";
   }
-  
+
   String getName2() {
-    return String(peoples[2]);
+    return "2";
   }
 
   String getName3() {
-    return String(peoples[3]);
+    return "2";
   }
- 
+
   String getName4() {
-    return String(peoples[4]);
+    return "2";
   }
-  
+
   String getName5() {
-    return String(peoples[5]);
+    return "2";
   }
-  
+
   String getName6() {
-    return String(peoples[6]);
+    return "2";
   }
 
   String getName7() {
-    return String(peoples[7]);
+    return "2";
   }
 
   String getName8() {
-    return String(peoples[8]);
+    return "2";
   }
-  
+
   String getName9() {
-    return String(peoples[9]);
+    return "2";
   }
 
   String getName10() {
-    return String(peoples[10]);
+    return "2";
   }
- 
+
   String getName11() {
-    return String(peoples[11]);
+    return "2";
   }
-  
+
   String getName12() {
-    return String(peoples[12]);
+    return "2";
   }
-  
+
   String getName13() {
-    return String(peoples[13]);
+    return "2";
   }
-  
+
   String getName14() {
-    return String(peoples[14]);
+    return "2";
   }
-  
+
   String getName15() {
-    return String(peoples[15]);
+    return "2";
   }
 
   String getName16() {
-    return String(peoples[16]);
+    return "2";
   }
- 
+
   String getName17() {
-    return String(peoples[17]);
+    return "2";
   }
-  
+
   String getName18() {
-    return String(peoples[18]);
+    return "2";
   }
-  
+
   String getName19() {
-    return String(peoples[19]);
+    return "2";
   }
 //**************************************************
-
-
 
 // RFID CONF
 MFRC522::MIFARE_Key key;
@@ -275,13 +272,18 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 //**************************************************
 void setup() {
   Serial.begin(9600);
-
+  //
+  display.init();
+  display.flipScreenVertically();
+  display.clear();
+  
   SPI.begin();
 
   EEPROM.begin(EEPROM_SIZE);
+  writeRfids();
 
-    
-  
+  readRfids();
+
   pinMode(confPin, INPUT_PULLUP);
   pinMode(greenLed, OUTPUT);
   pinMode(redLed, OUTPUT);
@@ -294,10 +296,19 @@ void setup() {
       return;
     }
 
+      //Seleciona a fonte maior
+    display.drawString(12,0, "Modo de Configuração");
+    display.drawLine(0, 20, 127, 20);             
+    display.drawString(22, 26, "Rede: RFID-LOCK"); 
+    display.drawString(28, 45, "IP: 192.168.4.1");
+
+    display.display();
+
     WiFi.softAP(ssid, password);
 
     server.on("/idInput0", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send_P(200, "text/plain", getId0().c_str());
+      
     });
 
     server.on("/idInput1", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -376,7 +387,7 @@ void setup() {
       request->send_P(200, "text/plain", getId19().c_str());
     });
 
-        server.on("/name0", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/name0", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send_P(200, "text/plain", getName0().c_str());
     });
 
@@ -455,7 +466,6 @@ void setup() {
     server.on("/name19", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send_P(200, "text/plain", getName19().c_str());
     });
-
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/index.html", String(), false);
     });
@@ -545,7 +555,7 @@ void setup() {
         name17 = request->getParam(name17_input)->value();
         name18 = request->getParam(name18_input)->value();
         name19 = request->getParam(name19_input)->value();
-
+//
         rfids[0] = id0;
         rfids[1] = id1;
         rfids[2] = id2;
@@ -566,46 +576,14 @@ void setup() {
         rfids[17] = id17;
         rfids[18] = id18;
         rfids[19] = id19;
+        
+        delay(10);
 
-        peoples[0] = name0;
-        peoples[1] = name1;
-        peoples[2] = name2;
-        peoples[3] = name3;
-        peoples[4] = name4;
-        peoples[5] = name5;
-        peoples[6] = name6;
-        peoples[7] = name7;
-        peoples[8] = name8;
-        peoples[9] = name9;
-        peoples[10] = name10;
-        peoples[11] = name11;
-        peoples[12] = name12;
-        peoples[13] = name13;
-        peoples[14] = name14;
-        peoples[15] = name15;
-        peoples[16] = name16;
-        peoples[17] = name17;
-        peoples[18] = name18;
-        peoples[19] = name19;
-
-        for(int i = 0; i < sizeRfids; i++) {
-          writeStringToEEPROM(i * 12, rfids[i]);
-          rfids[i] = readStringFromEEPROM(i * 12);
-          rfids[i].remove(11, 12);
-        }
-
-        for(int p = 0; p < sizePeoples; p++) {
-          writeStringToEEPROM(p * 5, peoples[p]);
-          peoples[p] = readStringFromEEPROM(p * 5);
-          peoples[p].remove(4, 5);
-          Serial.println(peoples[p]);
-        }
-
-
-      // Pica o Led para indicar que gravou
-              digitalWrite(greenLed, HIGH);
-              delay(500);
-              digitalWrite(greenLed, LOW);
+        writeRfids();
+        
+        digitalWrite(greenLed, HIGH);
+        delay(500);
+        digitalWrite(greenLed, LOW);
       // ***********************************
       }
       
@@ -615,28 +593,40 @@ void setup() {
 
     server.begin(); 
   } else {
+    delay(10);
+    
     mfrc522.PCD_Init();
     Serial.println("Aproxime o seu cartao do leitor...");
     Serial.println();
+
+    display.drawString(38,0, "Modo RFID");
+    display.drawLine(0, 20, 127, 20);             
+    display.drawString(12, 26, "Aproxime o seu cartao"); 
+    display.drawString(40, 40, "do leitor ..."); 
+    display.display();
     
+    readRfids();
     
-    coiso[0] = readStringFromEEPROM(0);
-
-    Serial.println(coiso[0]);
-
-//     for(int i = 0; i < sizeRfids; i++) {
-//          writeStringToEEPROM(i * 12, rfids[i]);
-//          rfids[i] = readStringFromEEPROM(i * 12);
-//          rfids[i].remove(11, 12);
-//
-//          Serial.println(rfids[i]);
-//        }
-
-//        for(int p = 0; p < sizePeoples; p++) {
-//          writeStringToEEPROM(p * 5, peoples[p]);
-//          peoples[p] = readStringFromEEPROM(p * 5);
-//          Serial.println(peoples[p]);
-//        }
+    Serial.println(rfids[0]);
+    Serial.println(rfids[1]);
+    Serial.println(rfids[2]);
+    Serial.println(rfids[3]);
+    Serial.println(rfids[4]);
+    Serial.println(rfids[5]);
+    Serial.println(rfids[6]);
+    Serial.println(rfids[7]);
+    Serial.println(rfids[8]);
+    Serial.println(rfids[9]);
+    Serial.println(rfids[10]);
+    Serial.println(rfids[11]);
+    Serial.println(rfids[12]);
+    Serial.println(rfids[13]);
+    Serial.println(rfids[14]);
+    Serial.println(rfids[15]);
+    Serial.println(rfids[16]);
+    Serial.println(rfids[17]);
+    Serial.println(rfids[18]);
+    Serial.println(rfids[19]);
 
   }
   
@@ -654,9 +644,10 @@ void loop() {
   if (!mfrc522.PICC_ReadCardSerial()) {
     return;
   }
-  
-  readData();
 
+
+  readData();
+  
   // one rfid at a time
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();  
@@ -682,8 +673,24 @@ void readData() {
     readedR = String(content.substring(1));
     readedR.toUpperCase();
     if (readedR == rfids[x]) {
-      Serial.println(peoples[x]);
       x=sizeRfids;
+          //Seleciona a fonte maior
+      display.clear();
+      display.drawString(38,0, "Modo RFID");
+      display.drawLine(0, 20, 127, 20);
+      display.drawString(22, 26, "Acesso autorizado"); 
+      display.drawString(28, 40, "ID:" + readedR); 
+      display.display();
+
+      delay(1000);
+       
+      display.clear();
+      display.drawString(38,0, "Modo RFID");
+      display.drawLine(0, 20, 127, 20);             
+      display.drawString(12, 26, "Aproxime o seu cartao"); 
+      display.drawString(40, 40, "do leitor ..."); 
+      display.display();
+      
       Serial.println();
       Serial.println("Authorized access");
       
@@ -695,7 +702,21 @@ void readData() {
 
     if(readedR != rfids[x] && x + 1 == sizeRfids) {
         Serial.println();
-        Serial.println(peoples[x]);
+        display.clear();
+        display.drawString(38,0, "Modo RFID");
+        display.drawLine(0, 20, 127, 20);
+      display.drawString(28, 26, "Acesso negado"); 
+      display.drawString(28, 40, "ID:" + readedR); 
+        display.display();
+
+        delay(1000);
+       
+        display.clear();
+        display.drawString(38,0, "Modo RFID");
+        display.drawLine(0, 20, 127, 20);             
+        display.drawString(12, 26, "Aproxime o seu cartao"); 
+        display.drawString(40, 40, "do leitor ..."); 
+        display.display();
         Serial.println("Access denied");
         digitalWrite(32, HIGH);
         delay(1000);
@@ -707,23 +728,86 @@ void readData() {
 //**************************************************
 
 
-void writeStringToEEPROM(int addrOffset, const String &strToWrite)
+void writeString(char add,String data)
 {
-  byte len = strToWrite.length();
-  EEPROM.write(addrOffset, len);
-  for (int i = 0; i < len; i++)
+  int _size = data.length();
+  int i;
+  for(i=0;i<_size;i++)
   {
-    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
+    EEPROM.write(add+i,data[i]);
   }
+  EEPROM.write(add+_size,'\0'); 
+  EEPROM.commit();
 }
 
-String readStringFromEEPROM(int addrOffset)
+
+String read_String(char add)
 {
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
-  for (int i = 0; i < newStrLen; i++)
-  {
-    data[i] = EEPROM.read(addrOffset + 1 + i);
+  int i;
+  char data[100]; //Max 100 Bytes
+  int len=0;
+  unsigned char k;
+  k=EEPROM.read(add);
+  while(k != '\0' && len<500)   //Read until null character
+  {    
+    k=EEPROM.read(add+len);
+    data[len]=k;
+    len++;
   }
+  data[len]='\0';
   return String(data);
+}
+
+void writeRfids() {
+    writeString(0, rfids[0]);
+    writeString(12, rfids[1]);
+    writeString(24, rfids[2]);
+    writeString(36, rfids[3]);
+    writeString(48, rfids[4]);
+    delay(10);
+    writeString(60, rfids[5]);
+    writeString(72, rfids[6]);
+    writeString(84, rfids[7]);
+    writeString(96, rfids[8]);
+    writeString(108, rfids[9]);
+    delay(10);
+    writeString(120, rfids[10]);
+    writeString(132, rfids[11]);
+    writeString(144, rfids[12]);
+    writeString(156, rfids[13]);
+    writeString(168, rfids[14]);
+    delay(10);
+    writeString(180, rfids[15]);
+    writeString(192, rfids[16]);
+    writeString(204, rfids[17]);
+    writeString(216, rfids[18]);
+    writeString(228, rfids[19]);
+    delay(10);
+}
+
+void readRfids() {
+    rfids[0] = read_String(0);
+    rfids[1] = read_String(12);
+    rfids[2] = read_String(24);
+    rfids[3] = read_String(36);
+    rfids[4] = read_String(48);
+    delay(10);
+    rfids[5] = read_String(60);
+    rfids[6] = read_String(72);
+    rfids[7] = read_String(84);
+    rfids[8] = read_String(96);
+    rfids[9] = read_String(108);
+    delay(10);
+    rfids[10] = read_String(120);
+    rfids[11] = read_String(132);
+    rfids[12] = read_String(144);
+    rfids[13] = read_String(156);
+    rfids[14] = read_String(168);
+    delay(10);
+    rfids[15] = read_String(180);
+    rfids[16] = read_String(192);
+    rfids[17] = read_String(204);
+    rfids[18] = read_String(216);
+    rfids[19] = read_String(228);
+    delay(10);
 }
