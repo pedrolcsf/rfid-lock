@@ -15,13 +15,16 @@
 //****************** DEFINE GPIOS ******************
 //**************************************************
   #define SS_PIN 5
-  #define RST_PIN 14 // mudar pro 4
+  #define RST_PIN 4 // mudar pro 4
 
-  #define confPin 13
-  #define confPin2 27
+  #define confPin 32
+  #define confPin2 33
+
+  #define releP 27
+  #define buzzer 13
   
-  #define greenLed 12
-  #define redLed 32
+  #define greenLed 2
+  #define redLed 15
   
   #define RESET_EEPROM 26
   #define EEPROM_SIZE 470
@@ -96,6 +99,9 @@
   String rfids[20] = {"69 64 83 41", "09 C4 7A 41", "8A 54 70 7F", "01 15 A1 59",  "CA 19 7B 7F", "9A C4 7C 80", "59 CB 2D 41", "D9 83 2C 41", "09 DD 77 41","39 00 2D 41", "79 7E 38 41","F9 1A B8 B2", "63 AB 09 0B","D9 5C B9 B2", "89 46 7A 41", "9A F0 77 7F", "00 00 00 00", "00 00 00 00", "00 00 00 00", "00 00 00 00"};
   byte sizeRfids = (sizeof(rfids) / sizeof(rfids[0]));
   String readedR = "";
+
+  int n[20] = {1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0};
+
 //**************************************************
 
 //**************************************************
@@ -180,85 +186,84 @@
   String getId19() {
     return String(rfids[19]);
   }
-
-  String getName0() {
-    return "2";
+  
+ String getName0() {
+    return String(n[0]);
   }
 
   String getName1() {
-    return "2";
+    return String(n[1]);
   }
 
   String getName2() {
-    return "2";
+    return String(n[2]);
   }
 
   String getName3() {
-    return "2";
+    return String(n[3]);
   }
 
   String getName4() {
-    return "2";
+    return String(n[4]);
   }
 
   String getName5() {
-    return "2";
+    return String(n[5]);
   }
 
   String getName6() {
-    return "2";
+    return String(n[6]);
   }
 
   String getName7() {
-    return "2";
+    return String(n[7]);
   }
 
   String getName8() {
-    return "2";
+    return String(n[8]);
   }
 
   String getName9() {
-    return "2";
+    return String(n[9]);
   }
 
   String getName10() {
-    return "2";
+    return String(n[10]);
   }
 
   String getName11() {
-    return "2";
+    return String(n[11]);
   }
 
   String getName12() {
-    return "2";
+    return String(n[12]);
   }
 
   String getName13() {
-    return "2";
+    return String(n[13]);
   }
 
   String getName14() {
-    return "2";
+    return String(n[14]);
   }
 
   String getName15() {
-    return "2";
+    return String(n[15]);
   }
 
   String getName16() {
-    return "2";
+    return String(n[16]);
   }
-
   String getName17() {
-    return "2";
+    return String(n[17]);
   }
 
   String getName18() {
-    return "2";
+    return String(n[18]);
   }
 
   String getName19() {
-    return "2";
+    return String(n[19]);
   }
 //**************************************************
 
@@ -280,13 +285,15 @@ void setup() {
   SPI.begin();
 
   EEPROM.begin(EEPROM_SIZE);
-  writeRfids();
 
   readRfids();
+  readNames();
 
   pinMode(confPin, INPUT_PULLUP);
   pinMode(greenLed, OUTPUT);
   pinMode(redLed, OUTPUT);
+  pinMode(releP, OUTPUT);
+  pinMode(buzzer, OUTPUT);
   
   ap = digitalRead(confPin);
 
@@ -577,9 +584,31 @@ void setup() {
         rfids[18] = id18;
         rfids[19] = id19;
         
+        n[0] = name0.toInt();
+        n[1] = name1.toInt();
+        n[2] = name2.toInt();
+        n[3] = name3.toInt();
+        n[4] = name4.toInt();
+        n[5] = name5.toInt();
+        n[6] = name6.toInt();
+        n[7] = name7.toInt();
+        n[8] = name8.toInt();
+        n[9] = name9.toInt();
+        n[10] = name10.toInt();
+        n[11] = name11.toInt();
+        n[12] = name12.toInt();
+        n[13] = name13.toInt();
+        n[14] = name14.toInt();
+        n[15] = name15.toInt();
+        n[16] = name16.toInt();
+        n[17] = name17.toInt();
+        n[18] = name18.toInt();
+        n[19] = name19.toInt();
+        
         delay(10);
-
         writeRfids();
+        writeNames();
+        
         
         digitalWrite(greenLed, HIGH);
         delay(500);
@@ -605,8 +634,6 @@ void setup() {
     display.drawString(40, 40, "do leitor ..."); 
     display.display();
     
-    readRfids();
-    
     Serial.println(rfids[0]);
     Serial.println(rfids[1]);
     Serial.println(rfids[2]);
@@ -628,6 +655,26 @@ void setup() {
     Serial.println(rfids[18]);
     Serial.println(rfids[19]);
 
+    Serial.println(n[0]);
+    Serial.println(n[1]);
+    Serial.println(n[2]);
+    Serial.println(n[3]);
+    Serial.println(n[4]);
+    Serial.println(n[5]);
+    Serial.println(n[6]);
+    Serial.println(n[7]);
+    Serial.println(n[8]);
+    Serial.println(n[9]);
+    Serial.println(n[10]);
+    Serial.println(n[11]);
+    Serial.println(n[12]);
+    Serial.println(n[13]);
+    Serial.println(n[14]);
+    Serial.println(n[15]);
+    Serial.println(n[16]);
+    Serial.println(n[17]);
+    Serial.println(n[18]);
+    Serial.println(n[19]);
   }
   
 
@@ -675,13 +722,32 @@ void readData() {
     if (readedR == rfids[x]) {
       x=sizeRfids;
           //Seleciona a fonte maior
+
+
+      Serial.println();
+      Serial.println("Authorized access");
+      Serial.println();
+
+      digitalWrite(buzzer, HIGH);
+      delay(200);
+      digitalWrite(buzzer, LOW);
+
+
       display.clear();
       display.drawString(38,0, "Modo RFID");
       display.drawLine(0, 20, 127, 20);
       display.drawString(22, 26, "Acesso autorizado"); 
-      display.drawString(28, 40, "ID:" + readedR); 
+      display.drawString(28, 40, "ID:" + readedR);
+       Serial.println(n[0]);
       display.display();
+      
 
+      digitalWrite(releP, HIGH);
+      digitalWrite(greenLed, HIGH);
+      delay(300);
+      digitalWrite(releP, LOW);
+      digitalWrite(greenLed, LOW);
+      
       delay(1000);
        
       display.clear();
@@ -690,24 +756,32 @@ void readData() {
       display.drawString(12, 26, "Aproxime o seu cartao"); 
       display.drawString(40, 40, "do leitor ..."); 
       display.display();
-      
-      Serial.println();
-      Serial.println("Authorized access");
-      
-      digitalWrite(12, HIGH);
-      delay(1000);
-      digitalWrite(12, LOW);
-      Serial.println();
     }
 
     if(readedR != rfids[x] && x + 1 == sizeRfids) {
+        digitalWrite(buzzer, HIGH);
+        delay(200);
+        digitalWrite(buzzer, LOW);
+        delay(200);
+        digitalWrite(buzzer, HIGH);
+        delay(200);
+        digitalWrite(buzzer, LOW);
+        
         Serial.println();
+        Serial.println("Access denied");
+        Serial.println(); 
+
         display.clear();
         display.drawString(38,0, "Modo RFID");
         display.drawLine(0, 20, 127, 20);
-      display.drawString(28, 26, "Acesso negado"); 
-      display.drawString(28, 40, "ID:" + readedR); 
+        display.drawString(28, 26, "Acesso negado"); 
+        display.drawString(28, 40, "ID:" + readedR); 
         display.display();
+        
+        digitalWrite(redLed, HIGH);
+        delay(1000);
+        digitalWrite(redLed, LOW);
+        
 
         delay(1000);
        
@@ -717,11 +791,7 @@ void readData() {
         display.drawString(12, 26, "Aproxime o seu cartao"); 
         display.drawString(40, 40, "do leitor ..."); 
         display.display();
-        Serial.println("Access denied");
-        digitalWrite(32, HIGH);
-        delay(1000);
-        digitalWrite(32, LOW);
-        Serial.println(); 
+
     }
   }
 }
@@ -784,6 +854,53 @@ void writeRfids() {
     writeString(228, rfids[19]);
     delay(10);
 }
+
+void writeNames() {
+  EEPROM.write(240, n[0]);
+  EEPROM.write(241, n[1]);
+  EEPROM.write(242, n[2]);
+  EEPROM.write(243, n[3]);
+  EEPROM.write(244, n[4]);
+  EEPROM.write(245, n[5]);
+  EEPROM.write(246, n[6]);
+  EEPROM.write(247, n[7]);
+  EEPROM.write(248, n[8]);
+  EEPROM.write(249, n[9]);
+  EEPROM.write(250, n[10]);
+  EEPROM.write(251, n[11]);
+  EEPROM.write(252, n[12]);
+  EEPROM.write(253, n[13]);
+  EEPROM.write(254, n[14]);
+  EEPROM.write(255, n[15]);
+  EEPROM.write(256, n[16]);
+  EEPROM.write(257, n[17]);
+  EEPROM.write(258, n[18]);
+  EEPROM.write(259, n[19]);
+}
+
+void readNames() {
+   n[0] = EEPROM.read(240);
+   n[1] = EEPROM.read(241);
+   n[2] = EEPROM.read(242);
+   n[3] = EEPROM.read(243);
+   n[4] = EEPROM.read(244);
+   n[5] = EEPROM.read(245);
+   n[6] = EEPROM.read(246);
+   n[7] = EEPROM.read(247);
+   n[8] = EEPROM.read(248);
+   n[9] = EEPROM.read(249);
+   n[10] = EEPROM.read(250);
+   n[11] = EEPROM.read(251);
+   n[12] = EEPROM.read(252);
+   n[13] = EEPROM.read(253);
+   n[14] = EEPROM.read(254);
+   n[15] = EEPROM.read(255);
+   n[16] = EEPROM.read(256);
+   n[17] = EEPROM.read(257);
+   n[18] = EEPROM.read(258);
+   n[19] = EEPROM.read(259);
+}
+
 
 void readRfids() {
     rfids[0] = read_String(0);
